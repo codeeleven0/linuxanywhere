@@ -1,0 +1,16 @@
+megs: 128
+vga: extension=vbe update_freq=1000
+display_library: sdl2
+romimage: file=/usr/local/share/bochs/bios.bin
+vgaromimage: file=/usr/local/share/bochs/vgabios.bin
+boot: cdrom
+panic: action=fatal
+error: action=ignore
+info: action=ignore
+debug: action=ignore
+pass: action=ignore
+ata0-master: type=cdrom, path=/usr/local/share/bochs/linux.iso, status=inserted
+plugin_ctrl: e1000=1
+e1000: enabled=1, mac=52:54:00:12:34:56, ethmod=slirp
+com1: enabled=1, mode=term, dev=/dev/tty
+log: /usr/local/share/bochs/bochs.log

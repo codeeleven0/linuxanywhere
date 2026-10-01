@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>linuxanywhere</title>
+    <link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css">
+</head>
+<body>
+    <div id="terminal"></div>
+    <canvas id="canvas"></canvas>
+    <script src="node_modules/@xterm/xterm/lib/xterm.js"></script>
+	<script src="node_modules/xterm-pty/index.js"></script>
+    <script>
+        var xterm = new Terminal();
+        xterm.open(document.querySelector("#terminal"));
+
+        const { master, slave } = openpty();
+
+        xterm.loadAddon(master);
+        
+        let syncing = false;
+        function syncfs(callback) {
+            if (syncing) return;
+            syncing = true;
+
+            Module.FS.syncfs(false, (err) => {
+                if (err) {
+                    console.error("syncing files error:", err)
+                }
+                syncing = false;
+                if (callback) callback(err);
+            });
+        }
+
+        async function loadFile(url, target) {
+            let resp = await fetch(url);
+            if (!resp.ok) {
+                throw new Error("failed to load url: " + url.toString());
+            }
+            let buffer = await resp.arrayBuffer();
+            let data = new Uint8Array(buffer);
+
+            Module.FS.writeFile(target, data);
+        }
+
+        async function powerwash() {
+            let dbs = await indexedDB.databases();
+            dbs.forEach(db => {
+                indexedDB.deleteDatabase(db.name);
+            });
+        }
+
+        Module = {
+            pty: slave,
+            noInitialRun: true,
+            canvas: document.querySelector("#canvas"),
+            preRun: [() => {
+                
+            }],
+            onRuntimeInitialized: async () => {
+                // await powerwash();
+                Module.FS.mkdirTree("/usr/local/share/bochs");
+                Module.FS.mount(Module.FS.filesystems.IDBFS, { autoPersist: true }, "/usr/local/share/bochs");
+                Module.FS.syncfs(true, async (err) => {
+                    if (err) console.error(err);
+                    try {
+                        Module.FS.stat("/usr/local/share/bochs/bios.bin");
+                    } catch {
+                        await loadFile("bios.bin", "/usr/local/share/bochs/bios.bin");
+                    }
+                    try {
+                        Module.FS.stat("/usr/local/share/bochs/vgabios.bin");
+                    } catch {
+                        await loadFile("vgabios.bin", "/usr/local/share/bochs/vgabios.bin");
+                    }
+                    try {
+                        Module.FS.stat("/usr/local/share/bochs/linux.iso");
+                    } catch {
+                        await loadFile("linux.iso", "/usr/local/share/bochs/linux.iso");
+                    }
+                    try {
+                        Module.FS.stat("/usr/local/share/bochs/bochsrc.txt");
+                    } catch {
+                        await loadFile("bochsrc.txt", "/usr/local/share/bochs/bochsrc.txt");
+                    }
+
+                    Module.callMain(["-q", "-f", "/usr/local/share/bochs/bochsrc.txt"])
+                });
+            }
+        };
+
+        window.addEventListener("beforeunload", () => Module.FS.syncfs(false, () => {}));
+    </script>
+    <script src="bochs.js"></script>
+</body>
+</html>

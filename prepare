@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+# run as sudo for apt deps, tested on 'ubuntu 26.04'
+# yes | apt update
+# yes | apt install node-html-minifier-terser emscripten nodejs npm
+
+mkdir -p bootstrap
+cd bootstrap
+wget https://sourceforge.net/projects/bochs/files/bochs/3.1/bochs-3.1.tar.gz/download -O bochs-3.1.tar.gz
+tar xvf bochs-3.1.tar.gz
+npm i @xterm/xterm
+npm i xterm-pty
+mkdir -p bochs/jsext
+cp node_modules/xterm-pty/emscripten-pty.js bochs/jsext/emscripten-pty.js
