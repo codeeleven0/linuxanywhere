@@ -2,6 +2,8 @@
 cd bootstrap
 cd bochs
 mkdir -p ../../dist
+cp ../../bochsrc.txt ../../dist
+cp ../../linux.iso ../../dist
 bash ../../src/bochs.make.sh
 cp -r ../node_modules ../../dist/
 cp ../../src/html/index.html ../../dist/

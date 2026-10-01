@@ -2,7 +2,4 @@ bootstrap/*
 bootstrap/
 *.tar.*
 *.tar
-dist/*
-dist/
 *.o
-*.wasm
